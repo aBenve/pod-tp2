@@ -5,9 +5,7 @@ import ar.edu.itba.pod.tp2.Models.DestinationAndDates;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
-import java.time.temporal.ChronoUnit;
-
-public class StationsPKAndDates implements Mapper<Integer, Bike, Integer, DestinationAndDates> {
+public class StationsPKAndDatesMapper implements Mapper<Integer, Bike, Integer, DestinationAndDates> {
     @Override
     public void map(Integer key, Bike value, Context<Integer, DestinationAndDates> context) {
         context.emit(
