@@ -1,7 +1,9 @@
 package ar.edu.itba.pod.tp2.client;
 
+import ar.edu.itba.pod.tp2.Mappers.OnlyMemberBikesMapper;
 import ar.edu.itba.pod.tp2.Models.Bike;
 import ar.edu.itba.pod.tp2.Models.Station;
+import ar.edu.itba.pod.tp2.Reducers.CountReducerFactory;
 import ar.edu.itba.pod.tp2.client.utils.CSVReaderHelper;
 import ar.edu.itba.pod.tp2.client.utils.ClientUtils;
 import ar.edu.itba.pod.tp2.client.utils.InputProperty;
@@ -11,6 +13,10 @@ import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
+import com.hazelcast.mapreduce.Job;
+import com.hazelcast.mapreduce.JobCompletableFuture;
+import com.hazelcast.mapreduce.JobTracker;
+import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +25,9 @@ import java.io.File;
 import java.io.FileWriter;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 
 public class Client {
@@ -75,14 +79,23 @@ public class Client {
 
         logger.info("Inicio del trabajo map/reduce");
 
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
+        KeyValueSource<Integer, Bike> source = KeyValueSource.fromMap(bikeIMap);
+        Job<Integer, Bike> job = jobTracker.newJob(source);
+
+        JobCompletableFuture<Map<String, Integer>> future = job
+                .mapper(new OnlyMemberBikesMapper())
+                .reducer(new CountReducerFactory())
+                .submit();
+
+        try {
+            Map<String, Integer> resultMap = future.get();
+            System.out.println(resultMap);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
         logger.info("Fin del trabajo map/reduce");
-
-        String mapName = "testMap";
-        IMap<Integer, String> testMapFromMember = hazelcastInstance.getMap(mapName);
-
-        testMapFromMember.set(1, "test1");
-        IMap<Integer, String> testMap = hazelcastInstance.getMap(mapName);
-        System.out.println(testMap.get(1));
 
         // ----------------------------------------
 

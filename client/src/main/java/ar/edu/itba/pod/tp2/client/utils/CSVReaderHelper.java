@@ -11,7 +11,6 @@ import com.opencsv.CSVReaderBuilder;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -52,7 +51,7 @@ public class CSVReaderHelper {
                         LocalDateTime.parse(row[2],formatter).toLocalDate(),
                         Integer.parseInt(row[1]),
                         Integer.parseInt(row[3]),
-                        Boolean.parseBoolean(row[4])
+                        row[4].equals("1")
                     )
             );
             index[0]++;
