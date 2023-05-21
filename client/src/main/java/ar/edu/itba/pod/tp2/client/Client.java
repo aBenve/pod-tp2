@@ -1,7 +1,9 @@
 package ar.edu.itba.pod.tp2.client;
 
 import ar.edu.itba.pod.tp2.Mappers.OnlyMemberBikesMapper;
+import ar.edu.itba.pod.tp2.Mappers.StationsPKAndDates;
 import ar.edu.itba.pod.tp2.Models.Bike;
+import ar.edu.itba.pod.tp2.Models.DestinationAndDates;
 import ar.edu.itba.pod.tp2.Models.Station;
 import ar.edu.itba.pod.tp2.Reducers.CountReducerFactory;
 import ar.edu.itba.pod.tp2.client.utils.CSVReaderHelper;
@@ -25,15 +27,15 @@ import java.io.File;
 import java.io.FileWriter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 
 public class Client {
     private static Logger logger = LoggerFactory.getLogger(Client.class);
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws InterruptedException, IOException, ExecutionException {
 
         // ./queryX -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX-DoutPath=YY [params]
         final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Missing addresses").orElse("");
@@ -76,12 +78,11 @@ public class Client {
         System.out.println(bikeIMap.get(1));
 
         logger.info("Fin de la lectura del archivo");
-
         logger.info("Inicio del trabajo map/reduce");
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
-        KeyValueSource<Integer, Bike> source = KeyValueSource.fromMap(bikeIMap);
-        Job<Integer, Bike> job = jobTracker.newJob(source);
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("query1");
+        KeyValueSource<Integer, Bike> bikeKeyValueSource = KeyValueSource.fromMap(bikeIMap);
+        Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
 
         JobCompletableFuture<Map<String, Integer>> future = job
                 .mapper(new OnlyMemberBikesMapper())
@@ -91,6 +92,25 @@ public class Client {
         try {
             Map<String, Integer> resultMap = future.get();
             System.out.println(resultMap);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        JobTracker jobTracker2 = hazelcastInstance.getJobTracker("query2");
+        KeyValueSource<Integer, Station> stationKeyValueSource = KeyValueSource.fromMap(stationIMap);
+
+
+        Job<Integer, Bike> job2 = jobTracker2.newJob(bikeKeyValueSource);
+
+        JobCompletableFuture<Map<Integer, List<DestinationAndDates>>> future2 = job2
+                .mapper(new StationsPKAndDates())
+                .submit();
+
+
+        try {
+            Map<Integer, List<DestinationAndDates>> resultMap2 = future2.get();
+            System.out.println(resultMap2);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }

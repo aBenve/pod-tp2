@@ -8,11 +8,11 @@ public class Bike implements Serializable {
 
     private LocalDate startDateTime; // Fecha y hora de inicio del viaje
     private LocalDate endDateTime; // Fecha y hora de fin del viaje
-    private Number origin; // Numero de la estación de origen
-    private Number destination; // Numero de la estación de destino
+    private Integer origin; // Numero de la estación de origen
+    private Integer destination; // Numero de la estación de destino
     private boolean isMember; // Indica si el viaje fue realizado por un miembro del sistema
 
-    public Bike(LocalDate startDateTime, LocalDate endDateTime, Number origin, Number destination, boolean isMember) {
+    public Bike(LocalDate startDateTime, LocalDate endDateTime, Integer origin, Integer destination, boolean isMember) {
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
         this.origin = origin;
@@ -30,11 +30,11 @@ public class Bike implements Serializable {
         return endDateTime;
     }
 
-    public Number getOrigin() {
+    public Integer getOrigin() {
         return origin;
     }
 
-    public Number getDestination() {
+    public Integer getDestination() {
         return destination;
     }
 

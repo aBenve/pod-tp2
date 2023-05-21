@@ -20,7 +20,7 @@ public class CountReducerFactory implements ReducerFactory<String, Integer, Inte
 
         @Override
         public void reduce(Integer number) {
-            count += number.intValue();
+            count += number;
         }
 
         @Override
