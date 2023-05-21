@@ -1,5 +1,6 @@
 package ar.edu.itba.pod.tp2.client;
 
+import ar.edu.itba.pod.tp2.client.utils.CSVReaderHelper;
 import ar.edu.itba.pod.tp2.client.utils.ClientUtils;
 import ar.edu.itba.pod.tp2.client.utils.InputProperty;
 import com.hazelcast.client.HazelcastClient;
@@ -8,8 +9,6 @@ import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,14 +17,17 @@ import java.io.File;
 import java.io.FileWriter;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
 
-import java.nio.file.Files.*;
 
 public class Client {
     private static Logger logger = LoggerFactory.getLogger(Client.class);
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
         // ./queryX -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX-DoutPath=YY [params]
         final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Missing addresses").orElse("");
@@ -57,6 +59,10 @@ public class Client {
 
         logger.info("Inicio de la lectura del archivo");
 
+
+        List<String[]> bikesData = new CSVReaderHelper(inPath, ';').getBikesData();
+
+        System.out.println(Arrays.toString(bikesData.get(0)));
 
         logger.info("Fin de la lectura del archivo");
 
