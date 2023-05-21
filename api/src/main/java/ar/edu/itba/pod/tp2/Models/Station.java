@@ -1,6 +1,8 @@
 package ar.edu.itba.pod.tp2.Models;
 
-public class Station {
+import java.io.Serializable;
+
+public class Station implements Serializable {
 
     private Number id; // Numero de la estación
     private String name; // Nombre de la estación
@@ -22,5 +24,14 @@ public class Station {
 
     public Coordinates getCoordinates() {
         return coordinates;
+    }
+
+    @Override
+    public String toString() {
+        return "Station{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", coordinates=" + coordinates +
+                '}';
     }
 }

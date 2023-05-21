@@ -1,12 +1,13 @@
 package ar.edu.itba.pod.tp2.Models;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * @param latitude  Latitud
  * @param longitude Longitud
  */
-public record Coordinates(double latitude, double longitude) {
+public record Coordinates(double latitude, double longitude) implements Serializable {
 
     public Double distanceTo(Coordinates other) {
         double latitudeDifference = Math.toRadians(other.latitude - this.latitude);

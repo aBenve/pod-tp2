@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.tp2.client;
 
+import ar.edu.itba.pod.tp2.Models.Bike;
+import ar.edu.itba.pod.tp2.Models.Station;
 import ar.edu.itba.pod.tp2.client.utils.CSVReaderHelper;
 import ar.edu.itba.pod.tp2.client.utils.ClientUtils;
 import ar.edu.itba.pod.tp2.client.utils.InputProperty;
@@ -59,10 +61,15 @@ public class Client {
 
         logger.info("Inicio de la lectura del archivo");
 
+        CSVReaderHelper readerHelper = new CSVReaderHelper(inPath, ';');
 
-        List<String[]> bikesData = new CSVReaderHelper(inPath, ';').getBikesData();
+        IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("bike-map");
+        IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("station-map");
 
-        System.out.println(Arrays.toString(bikesData.get(0)));
+        bikeIMap.putAll(readerHelper.getBikesData());
+        stationIMap.putAll(readerHelper.getStationsData());
+
+        System.out.println(bikeIMap.get(1));
 
         logger.info("Fin de la lectura del archivo");
 

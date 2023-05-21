@@ -15,6 +15,9 @@ public class Server {
         logger.info(" Server Starting ...");
 
         Config config = new Config();
+
+        //config.getSerializationConfig().addDataSerializableFactory(1, new SerializationFactory() );
+
         GroupConfig groupConfig = new GroupConfig()
                 .setName("benve")
                 .setPassword("benve");

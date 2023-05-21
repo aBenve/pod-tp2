@@ -1,5 +1,8 @@
 package ar.edu.itba.pod.tp2.client.utils;
 
+import ar.edu.itba.pod.tp2.Models.Bike;
+import ar.edu.itba.pod.tp2.Models.Coordinates;
+import ar.edu.itba.pod.tp2.Models.Station;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -9,27 +12,74 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CSVReaderHelper {
 
     private static final String BIKES = "bikes.csv";
     private static final String STATIONS = "stations.csv";
 
+    private static final Integer BIKES_LENGTH = 5;
+    private static final Integer STATIONS_LENGTH = 4;
     private final String path;
+
     private final char delimiter;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     public CSVReaderHelper(String path, char delimiter) {
         this.path = path;
         this.delimiter = delimiter;
     }
 
 
-    public List<String[]> getBikesData(){
-        return getData(this.path + BIKES);
+    public Map<Integer, Bike> getBikesData(){
+        List<String[]> data =  getData(this.path + BIKES);
+        Map<Integer, Bike> bikes = new HashMap<>();
+
+        final Integer[] index = {0};
+        data.forEach((row) -> {
+            if(row.length != BIKES_LENGTH)
+                throw new RuntimeException("Invalid csv length");
+
+            bikes.put(
+                    index[0],
+                    new Bike(
+                        LocalDateTime.parse(row[0],formatter).toLocalDate(),
+                        LocalDateTime.parse(row[2],formatter).toLocalDate(),
+                        Integer.parseInt(row[1]),
+                        Integer.parseInt(row[3]),
+                        Boolean.parseBoolean(row[4])
+                    )
+            );
+            index[0]++;
+        });
+
+        return bikes;
     }
 
-    public List<String[]> getStationsData(){
-        return getData(this.path + STATIONS);
+    public Map<Integer, Station> getStationsData(){
+        List<String[]> data =  getData(this.path + STATIONS);
+        Map<Integer, Station> stations = new HashMap<>();
+
+        data.forEach((row) -> {
+            if(row.length != STATIONS_LENGTH)
+                throw new RuntimeException("Invalid csv length");
+
+            stations.put(
+                    Integer.parseInt(row[0])
+                    ,new Station(
+                        Integer.parseInt(row[0]),
+                        row[1],
+                        new Coordinates(Double.parseDouble(row[2]), Double.parseDouble(row[3]))
+                    )
+            );
+        });
+
+        return stations;
     }
 
     private List<String[]> getData(String path){
