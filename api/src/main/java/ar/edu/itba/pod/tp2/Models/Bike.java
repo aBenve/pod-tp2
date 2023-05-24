@@ -1,18 +1,18 @@
 package ar.edu.itba.pod.tp2.Models;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class Bike implements Serializable {
 
-    private LocalDate startDateTime; // Fecha y hora de inicio del viaje
-    private LocalDate endDateTime; // Fecha y hora de fin del viaje
+    private LocalDateTime startDateTime; // Fecha y hora de inicio del viaje
+    private LocalDateTime endDateTime; // Fecha y hora de fin del viaje
     private Integer origin; // Numero de la estación de origen
     private Integer destination; // Numero de la estación de destino
     private boolean isMember; // Indica si el viaje fue realizado por un miembro del sistema
 
-    public Bike(LocalDate startDateTime, LocalDate endDateTime, Integer origin, Integer destination, boolean isMember) {
+    public Bike(LocalDateTime startDateTime, LocalDateTime endDateTime, Integer origin, Integer destination, boolean isMember) {
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
         this.origin = origin;
@@ -22,11 +22,11 @@ public class Bike implements Serializable {
 
 
 
-    public LocalDate getStartDateTime() {
+    public LocalDateTime getStartDateTime() {
         return startDateTime;
     }
 
-    public LocalDate getEndDateTime() {
+    public LocalDateTime getEndDateTime() {
         return endDateTime;
     }
 

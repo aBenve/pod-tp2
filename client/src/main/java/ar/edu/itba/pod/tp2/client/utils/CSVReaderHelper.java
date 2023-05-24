@@ -3,6 +3,7 @@ package ar.edu.itba.pod.tp2.client.utils;
 import ar.edu.itba.pod.tp2.Models.Bike;
 import ar.edu.itba.pod.tp2.Models.Coordinates;
 import ar.edu.itba.pod.tp2.Models.Station;
+import com.google.type.DateTime;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -47,8 +48,8 @@ public class CSVReaderHelper {
             bikes.put(
                     index[0],
                     new Bike(
-                        LocalDateTime.parse(row[0],formatter).toLocalDate(),
-                        LocalDateTime.parse(row[2],formatter).toLocalDate(),
+                        LocalDateTime.parse(row[0],formatter),
+                        LocalDateTime.parse(row[2],formatter),
                         Integer.parseInt(row[1]),
                         Integer.parseInt(row[3]),
                         row[4].equals("1")
@@ -69,11 +70,11 @@ public class CSVReaderHelper {
                 throw new RuntimeException("Invalid csv length");
 
             stations.put(
-                    Integer.parseInt(row[0])
-                    ,new Station(
-                        Integer.parseInt(row[0]),
-                        row[1],
-                        new Coordinates(Double.parseDouble(row[2]), Double.parseDouble(row[3]))
+                    Integer.parseInt(row[0]),
+                    new Station(
+                            Integer.parseInt(row[0]),
+                            row[1],
+                            new Coordinates(Double.parseDouble(row[2]), Double.parseDouble(row[3]))
                     )
             );
         });

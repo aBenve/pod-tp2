@@ -34,4 +34,6 @@ public class Station implements Serializable {
                 ", coordinates=" + coordinates +
                 '}';
     }
+
+
 }

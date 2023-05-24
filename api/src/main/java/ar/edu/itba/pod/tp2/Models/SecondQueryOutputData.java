@@ -1,9 +1,9 @@
 package ar.edu.itba.pod.tp2.Models;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-public record SecondQueryOutputData(String destination, Double distance, Double velocity, LocalDate startDate,
-                                    LocalDate endDate) implements Serializable {
+public record SecondQueryOutputData(String destination, Double distance, Double velocity, LocalDateTime startDate,
+                                    LocalDateTime endDate) implements Serializable {
 
 }
