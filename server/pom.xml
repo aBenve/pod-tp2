@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>pod-tp2-parent</artifactId>
+    <artifactId>tpe2-l61448-parent</artifactId>
     <groupId>ar.edu.itba.pod.tp2</groupId>
     <version>2023.1Q</version>
   </parent>
-  <artifactId>pod-tp2-server</artifactId>
+  <artifactId>tpe2-l61448-server</artifactId>
   <version>2023.1Q</version>
-  <name>pod-tp2-server</name>
+  <name>tpe2-l61448-server</name>
   <dependencies>
     <dependency>
       <groupId>ar.edu.itba.pod.tp2</groupId>

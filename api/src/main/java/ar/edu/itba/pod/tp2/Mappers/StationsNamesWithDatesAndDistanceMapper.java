@@ -15,12 +15,24 @@ public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, 
 
     private IMap<Integer, Station> stationIMap;
 
-
     @Override
     public void map(Integer key, Bike value, Context<String, SecondQueryOutputData> context) {
 
         Station origin = stationIMap.get(value.getOrigin());
+        if (origin == null) {
+            throw new RuntimeException("Origin station not found");
+        }
+
         Station destination = stationIMap.get(value.getDestination());
+
+        if (destination == null) {
+            throw new RuntimeException("Destination station not found");
+        }
+
+        // If the origin and destination are the same, we don't want to emit anything
+        if(origin.equals(destination)){
+            return;
+        }
 
         double distance = origin.getCoordinates().distanceTo(destination.getCoordinates());
 
@@ -30,7 +42,7 @@ public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, 
 
 
         speed = Math.round(speed * 100.0) / 100.0;
-        distance = Math.round(speed * 100.0) / 100.0;
+        distance = Math.round(distance * 100.0) / 100.0;
 
         context.emit(
                 origin.getName(),
@@ -46,6 +58,6 @@ public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, 
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        this.stationIMap = hazelcastInstance.getMap("station-map");
+        this.stationIMap = hazelcastInstance.getMap("i61448-station-map");
     }
 }

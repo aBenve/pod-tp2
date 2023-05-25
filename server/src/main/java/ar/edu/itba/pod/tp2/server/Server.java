@@ -2,6 +2,7 @@ package ar.edu.itba.pod.tp2.server;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ public class Server {
         //config.getSerializationConfig().addDataSerializableFactory(1, new SerializationFactory() );
 
         GroupConfig groupConfig = new GroupConfig()
-                .setName("benve")
+                .setName("i61448")
                 .setPassword("benve");
         config.setGroupConfig(groupConfig);
 
@@ -42,5 +43,7 @@ public class Server {
 
         // Start cluster
         Hazelcast.newHazelcastInstance(config);
+//        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+//        hazelcastInstance.getCluster().shutdown();
     }
 }

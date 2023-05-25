@@ -5,5 +5,4 @@ import java.time.LocalDateTime;
 
 public record SecondQueryOutputData(String destination, Double distance, Double velocity, LocalDateTime startDate,
                                     LocalDateTime endDate) implements Serializable {
-
 }

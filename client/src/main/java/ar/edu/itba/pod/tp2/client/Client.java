@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.tp2.client;
 
+import ar.edu.itba.pod.tp2.Collators.OrderStationsByTripsOrAlphabetic;
+import ar.edu.itba.pod.tp2.Collators.OrderStationsByVelocityOrAlphabetic;
 import ar.edu.itba.pod.tp2.Mappers.OnlyMemberBikesMapper;
 import ar.edu.itba.pod.tp2.Mappers.StationsNamesWithDatesAndDistanceMapper;
 import ar.edu.itba.pod.tp2.Models.*;
@@ -28,18 +30,32 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 
 public class Client {
+
+    private static final String OUTPUT_FILE_NAME = "output.csv";
     private static Logger logger = LoggerFactory.getLogger(Client.class);
 
     public static void main(String[] args) throws InterruptedException, IOException, ExecutionException {
 
+
+        if(args.length == 0){
+            logger.error("Missing query");
+            System.exit(1);
+        }
+
+        String selectedQuery = args[0];
+
         // ./queryX -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX-DoutPath=YY [params]
         final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Missing addresses").orElse("");
+        final String nodesAddresses[] = RAWAddresses.split(";");
+
         final String inPath = ClientUtils.getProperty(InputProperty.IN_PATH, () -> "Missing inPath").orElse("");
         final String outPath = ClientUtils.getProperty(InputProperty.OUT_PATH, () -> "Missing outPath").orElse("");
+
 
         logger.info("Client Starting ...");
 
@@ -47,7 +63,7 @@ public class Client {
         ClientConfig clientConfig = new ClientConfig();
         // Group Config
         GroupConfig groupConfig = new GroupConfig()
-                .setName("benve")
+                .setName("i61448")
                 .setPassword("benve");
         clientConfig.setGroupConfig(groupConfig);
 
@@ -63,75 +79,101 @@ public class Client {
         // ----------------------------------------
         // Here we do some operations on the cluster
 
-
         logger.info("Inicio de la lectura del archivo");
 
-                CSVReaderHelper readerHelper = new CSVReaderHelper(inPath, ';');
+        CSVReaderHelper readerHelper = new CSVReaderHelper(inPath, ';');
 
-                IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("bike-map");
-                IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("station-map");
+        IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("i61448-bike-map");
+        IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
-                bikeIMap.putAll(readerHelper.getBikesData());
-                stationIMap.putAll(readerHelper.getStationsData());
-
+        bikeIMap.putAll(readerHelper.getBikesData());
+        stationIMap.putAll(readerHelper.getStationsData());
 
         logger.info("Fin de la lectura del archivo");
         logger.info("Inicio del trabajo map/reduce");
 
-                // Query 1
-                    JobTracker jobTracker = hazelcastInstance.getJobTracker("query1");
-                    KeyValueSource<Integer, Bike> bikeKeyValueSource = KeyValueSource.fromMap(bikeIMap);
-                    Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
+        switch (selectedQuery) {
+            case "query1" -> {
+                Optional<Map<String, Integer>> query1Result = query1(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
 
-                    JobCompletableFuture<Map<String, Integer>> future = job
-                            .mapper(new OnlyMemberBikesMapper())
-                            .reducer(new CountReducerFactory())
-                            .submit();
+                if (query1Result.isPresent())
+                    ClientUtils.writeQuery1(outPath, query1Result.get());
+                else
+                    logger.error("Error en la ejecucion de la query1");
 
-                    Map<String, Integer> resultMap = future.get();
-                    System.out.println(resultMap);
-                // Query 1
+                System.out.println(query1Result);
+            }
+            case "query2" -> {
+                Optional<Map<String, SecondQueryOutputData>> query2Result = query2(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
 
-                // Query 2
-                    Integer N = 5;
+                if (query2Result.isPresent())
+                    ClientUtils.writeQuery2(outPath, query2Result.get());
+                else
+                    logger.error("Error en la ejecucion de la query2");
 
-                    Job<Integer, Bike> job2 = jobTracker.newJob(bikeKeyValueSource);
-                    JobCompletableFuture<Map<String, SecondQueryOutputData>> future2 = job2
-                            .mapper(new StationsNamesWithDatesAndDistanceMapper())
-                            .reducer(new TakeFastestTravelReducerFactory())
-                            .submit();
+                System.out.println(query2Result);
+            }
+            default -> {
+                logger.error("Invalid query");
+                System.exit(1);
+            }
+        }
 
-                    Map<String, SecondQueryOutputData> resultMap2 = future2.get();
-                    System.out.println(resultMap2);
-                // Query 2
 
         logger.info("Fin del trabajo map/reduce");
 
         // ----------------------------------------
 
+        // Clean all maps
+        bikeIMap.clear();
+        stationIMap.clear();
+
         // Shutdown
         HazelcastClient.shutdownAll();
     }
 
-    // TODO: REWRITE THIS
-    private static void writeStationsDetail(String outPath) {
-        StringBuilder answer = new StringBuilder();
+    private static Optional<Map<String, Integer>> query1 (HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ){
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query1");
+        Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
 
-        answer.append("--------------------------------------\n");
-        createFile(outPath, answer.toString());
-    }
-
-    private static void createFile(String outPath, String answer) {
-        File outFile = new File(outPath);
+        JobCompletableFuture<Map<String, Integer>> future = job
+                .mapper(new OnlyMemberBikesMapper())
+                .reducer(new CountReducerFactory())
+                .submit(new OrderStationsByTripsOrAlphabetic());
         try {
-            if (!outFile.exists()) {
-                outFile.createNewFile();
-            }
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
-            writer.write(answer);
-            writer.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Error while creating file");
+            Map<String, Integer> resultMap = future.get();
+            return Optional.of(resultMap);
         }
+        catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
     }
+
+    private static Optional<Map<String, SecondQueryOutputData>> query2( HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ) {
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query2");
+        Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
+        JobCompletableFuture<Map<String, SecondQueryOutputData>> future = job
+                .mapper(new StationsNamesWithDatesAndDistanceMapper())
+                .reducer(new TakeFastestTravelReducerFactory())
+                .submit(new OrderStationsByVelocityOrAlphabetic());
+
+        try {
+            Map<String, SecondQueryOutputData> resultMap2 = future.get();
+            return Optional.of(resultMap2);
+        }
+        catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    // TODO: REWRITE THIS
+
+    /*
+    station;started_trips
+    Métro Mont-Royal (Rivard / du Mont-Royal);89836
+    Marquette / du Mont-Royal;61421
+     */
+
 }

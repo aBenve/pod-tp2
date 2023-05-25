@@ -38,6 +38,10 @@ public class CSVReaderHelper {
 
     public Map<Integer, Bike> getBikesData(){
         List<String[]> data =  getData(this.path + BIKES);
+
+        if (data.isEmpty())
+            throw new RuntimeException("Empty bikes csv");
+
         Map<Integer, Bike> bikes = new HashMap<>();
 
         final Integer[] index = {0};
@@ -63,6 +67,10 @@ public class CSVReaderHelper {
 
     public Map<Integer, Station> getStationsData(){
         List<String[]> data =  getData(this.path + STATIONS);
+
+        if (data.isEmpty())
+            throw new RuntimeException("Empty stations csv");
+
         Map<Integer, Station> stations = new HashMap<>();
 
         data.forEach((row) -> {
