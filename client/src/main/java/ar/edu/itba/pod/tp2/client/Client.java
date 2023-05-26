@@ -39,31 +39,30 @@ public class Client {
 
 
         if(args.length == 0){
-            logger.error("Missing query");
+            logger.error("Falta la query");
             System.exit(1);
         }
 
         String selectedQuery = args[0];
         Integer stationsAmount = 0;
+
         if(selectedQuery.equals("query2")) {
-            stationsAmount = Integer.parseInt(ClientUtils.getProperty(InputProperty.AMOUNT_OF_STATIONS, () -> "Missing n").orElse(""));
+            stationsAmount = Integer.parseInt(ClientUtils.getProperty(InputProperty.AMOUNT_OF_STATIONS, () -> "Falta la cantidad de estaciones").orElse(""));
         }
 
         // ./queryX -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX-DoutPath=YY [params]
-        final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Missing addresses").orElse("");
+        final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Faltan las direcciones de los nodos").orElse("");
         final String nodesAddresses[] = RAWAddresses.split(";");
 
         if(nodesAddresses.length == 0){
-            logger.error("Missing addresses");
+            logger.error("Faltan las direcciones de los nodos");
             System.exit(1);
         }
 
-        final String inPath = ClientUtils.getProperty(InputProperty.IN_PATH, () -> "Missing inPath").orElse("");
-        final String outPath = ClientUtils.getProperty(InputProperty.OUT_PATH, () -> "Missing outPath").orElse("");
+        final String inPath = ClientUtils.getProperty(InputProperty.IN_PATH, () -> "Falta la direccion de entrada de datos").orElse("");
+        final String outPath = ClientUtils.getProperty(InputProperty.OUT_PATH, () -> "Falta la direccion de salida de datos").orElse("");
 
-
-
-        logger.info("Client Starting ...");
+        logger.info("Iniciando cliente ...");
 
         ClientConfig clientConfig = new ClientConfig();
         GroupConfig groupConfig = new GroupConfig()
@@ -90,8 +89,13 @@ public class Client {
         IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("i61448-bike-map");
         IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
-        bikeIMap.putAll(readerHelper.getBikesData());
-        stationIMap.putAll(readerHelper.getStationsData());
+        try{
+            bikeIMap.putAll(readerHelper.getBikesData());
+            stationIMap.putAll(readerHelper.getStationsData());
+        }catch (Exception e){
+            logger.error("Error en la lectura del archivo");
+            clearAndExit(bikeIMap, stationIMap, hazelcastInstance, true);
+        }
 
         logger.info("Fin de la lectura del archivo");
         logger.info("Inicio del trabajo map/reduce");
@@ -105,8 +109,10 @@ public class Client {
                 if (query1Result.isPresent())
                     ClientUtils.writeQuery1(outPath, query1Result.get());
                 else
+                {
                     logger.error("Error en la ejecucion de la query1");
-
+                    clearAndExit(bikeIMap, stationIMap, hazelcastInstance, true);
+                }
             }
             case "query2" -> {
                 Optional<List<Map.Entry<String, SecondQueryOutputData>>> query2Result =
@@ -115,12 +121,14 @@ public class Client {
 
                 if (query2Result.isPresent())
                     ClientUtils.writeQuery2(outPath, query2Result.get());
-                else
+                else{
                     logger.error("Error en la ejecucion de la query2");
+                    clearAndExit(bikeIMap, stationIMap, hazelcastInstance, true);
+                }
 
             }
             default -> {
-                logger.error("Invalid query");
+                logger.error("Query invalida");
                 System.exit(1);
             }
         }
@@ -129,13 +137,14 @@ public class Client {
 
         // ----------------------------------------
 
-        // Clean all maps
+        clearAndExit(bikeIMap, stationIMap, hazelcastInstance,false);
+    }
+    private static void clearAndExit(IMap<Integer, Bike> bikeIMap, IMap<Integer, Station> stationIMap, HazelcastInstance hazelcastInstance, boolean error) {
         bikeIMap.clear();
         stationIMap.clear();
         hazelcastInstance.getDistributedObjects().forEach(DistributedObject::destroy);
-
-        // Shutdown
         HazelcastClient.shutdownAll();
+        System.exit(error ? 1 : 0);
     }
-
 }
+
