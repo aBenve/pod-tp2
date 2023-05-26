@@ -3,10 +3,11 @@ package ar.edu.itba.pod.tp2.Collators;
 import ar.edu.itba.pod.tp2.Models.SecondQueryOutputData;
 import com.hazelcast.mapreduce.Collator;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class OrderStationsByVelocityOrAlphabetic implements Collator<Map.Entry<String, SecondQueryOutputData>, List<Map.Entry<String, SecondQueryOutputData>>> {
+public class OrderStationsByVelocityOrAlphabetic implements Collator<Map.Entry<String, SecondQueryOutputData>, List<Map.Entry<String, SecondQueryOutputData>>>, Serializable {
     private final Integer n;
 
     public OrderStationsByVelocityOrAlphabetic(Integer n) {

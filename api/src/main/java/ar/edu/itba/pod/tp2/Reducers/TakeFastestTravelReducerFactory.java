@@ -4,13 +4,15 @@ import ar.edu.itba.pod.tp2.Models.SecondQueryOutputData;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
+import java.io.Serializable;
+
 
 public class TakeFastestTravelReducerFactory implements ReducerFactory<String, SecondQueryOutputData, SecondQueryOutputData> {
     @Override
     public Reducer<SecondQueryOutputData, SecondQueryOutputData> newReducer(String s) {
         return new TakeFastestTravel();
     }
-    private static class TakeFastestTravel extends Reducer<SecondQueryOutputData, SecondQueryOutputData> {
+    private static class TakeFastestTravel extends Reducer<SecondQueryOutputData, SecondQueryOutputData> implements Serializable {
         private volatile Double maxSpeed;
         private volatile SecondQueryOutputData secondQueryOutputData;
 

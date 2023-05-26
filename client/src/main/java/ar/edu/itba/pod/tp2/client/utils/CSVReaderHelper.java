@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class CSVReaderHelper {
 
-    private static final String BIKES = "bikes.csv";
+    private static final String BIKES = "bikes1000.csv";
     private static final String STATIONS = "stations.csv";
 
     private static final Integer BIKES_LENGTH = 5;
@@ -39,8 +39,9 @@ public class CSVReaderHelper {
     public Map<Integer, Bike> getBikesData(){
         List<String[]> data =  getData(this.path + BIKES);
 
-        if (data.isEmpty())
+        if (data.isEmpty()) {
             throw new RuntimeException("Empty bikes csv");
+        }
 
         Map<Integer, Bike> bikes = new HashMap<>();
 

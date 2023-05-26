@@ -3,7 +3,9 @@ package ar.edu.itba.pod.tp2.Reducers;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-public class CountReducerFactory implements ReducerFactory<String, Integer, Integer> {
+import java.io.Serializable;
+
+public class CountReducerFactory implements ReducerFactory<String, Integer, Integer>, Serializable {
 
     @Override
     public Reducer<Integer, Integer> newReducer(String s) {

@@ -8,7 +8,9 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
-public class OnlyMemberBikesMapper implements Mapper<Integer, Bike, String, Integer>, HazelcastInstanceAware {
+import java.io.Serializable;
+
+public class OnlyMemberBikesMapper implements Mapper<Integer, Bike, String, Integer>, HazelcastInstanceAware, Serializable {
 
     private IMap<Integer, Station> stationIMap;
 

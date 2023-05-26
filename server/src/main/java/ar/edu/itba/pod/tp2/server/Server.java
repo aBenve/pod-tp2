@@ -17,8 +17,6 @@ public class Server {
 
         Config config = new Config();
 
-        //config.getSerializationConfig().addDataSerializableFactory(1, new SerializationFactory() );
-
         GroupConfig groupConfig = new GroupConfig()
                 .setName("i61448")
                 .setPassword("benve");

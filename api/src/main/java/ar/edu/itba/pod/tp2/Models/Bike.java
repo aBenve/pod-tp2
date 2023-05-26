@@ -20,8 +20,6 @@ public class Bike implements Serializable {
         this.isMember = isMember;
     }
 
-
-
     public LocalDateTime getStartDateTime() {
         return startDateTime;
     }

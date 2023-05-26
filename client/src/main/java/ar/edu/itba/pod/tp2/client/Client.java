@@ -7,9 +7,7 @@ import ar.edu.itba.pod.tp2.Mappers.StationsNamesWithDatesAndDistanceMapper;
 import ar.edu.itba.pod.tp2.Models.*;
 import ar.edu.itba.pod.tp2.Reducers.CountReducerFactory;
 import ar.edu.itba.pod.tp2.Reducers.TakeFastestTravelReducerFactory;
-import ar.edu.itba.pod.tp2.client.utils.CSVReaderHelper;
-import ar.edu.itba.pod.tp2.client.utils.ClientUtils;
-import ar.edu.itba.pod.tp2.client.utils.InputProperty;
+import ar.edu.itba.pod.tp2.client.utils.*;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
@@ -35,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Client {
 
-    private static Logger logger = LoggerFactory.getLogger(Client.class);
+    private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
     public static void main(String[] args) throws InterruptedException, IOException, ExecutionException {
 
@@ -75,7 +73,9 @@ public class Client {
 
         // Client Network Config
         ClientNetworkConfig clientNetworkConfig = new ClientNetworkConfig();
+
         String[] addresses = {"192.168.1.98:5701"};
+
         clientNetworkConfig.addAddress(addresses);
         clientConfig.setNetworkConfig(clientNetworkConfig);
 
@@ -90,7 +90,6 @@ public class Client {
         IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("i61448-bike-map");
         IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
-
         bikeIMap.putAll(readerHelper.getBikesData());
         stationIMap.putAll(readerHelper.getStationsData());
 
@@ -99,7 +98,9 @@ public class Client {
 
         switch (selectedQuery) {
             case "query1" -> {
-                Optional<List<Map.Entry<String, Integer>>> query1Result = query1(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
+                Optional<List<Map.Entry<String, Integer>>> query1Result =
+                        new FirstQueryResolver("i61448-query1", hazelcastInstance, bikeIMap)
+                                .resolve();
 
                 if (query1Result.isPresent())
                     ClientUtils.writeQuery1(outPath, query1Result.get());
@@ -108,7 +109,9 @@ public class Client {
 
             }
             case "query2" -> {
-                Optional<List<Map.Entry<String, SecondQueryOutputData>>> query2Result = query2(hazelcastInstance, KeyValueSource.fromMap(bikeIMap), stationsAmount);
+                Optional<List<Map.Entry<String, SecondQueryOutputData>>> query2Result =
+                        new SecondQueryResolver("i61448-query2", hazelcastInstance, bikeIMap, stationsAmount)
+                            .resolve();
 
                 if (query2Result.isPresent())
                     ClientUtils.writeQuery2(outPath, query2Result.get());
@@ -122,7 +125,6 @@ public class Client {
             }
         }
 
-
         logger.info("Fin del trabajo map/reduce");
 
         // ----------------------------------------
@@ -132,46 +134,8 @@ public class Client {
         stationIMap.clear();
         hazelcastInstance.getDistributedObjects().forEach(DistributedObject::destroy);
 
-
         // Shutdown
         HazelcastClient.shutdownAll();
-    }
-
-    private static Optional<List<Map.Entry<String, Integer>>> query1 (HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ){
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query1");
-        Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
-
-        JobCompletableFuture<List<Map.Entry<String, Integer>>> future = job
-                .mapper(new OnlyMemberBikesMapper())
-                .reducer(new CountReducerFactory())
-                .submit(new OrderStationsByTripsOrAlphabetic());
-        try {
-            List<Map.Entry<String, Integer>> resultMap = future.get();
-            return Optional.of(resultMap);
-        }
-        catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<List<Map.Entry<String, SecondQueryOutputData>>> query2( HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource, Integer n ) {
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query2");
-        Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
-
-        JobCompletableFuture<List<Map.Entry<String, SecondQueryOutputData>>> future = job
-                .mapper(new StationsNamesWithDatesAndDistanceMapper())
-                .reducer(new TakeFastestTravelReducerFactory())
-                .submit(new OrderStationsByVelocityOrAlphabetic(n));
-
-        try {
-            List<Map.Entry<String, SecondQueryOutputData>> resultMap = future.get();
-            return Optional.of(resultMap);
-        }
-        catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return Optional.empty();
     }
 
 }

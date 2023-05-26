@@ -7,11 +7,12 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
-public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, Bike, String, SecondQueryOutputData>, HazelcastInstanceAware {
+public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, Bike, String, SecondQueryOutputData>, HazelcastInstanceAware, Serializable {
 
 
     private IMap<Integer, Station> stationIMap;
