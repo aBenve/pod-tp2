@@ -16,13 +16,14 @@ public record Coordinates(double latitude, double longitude) implements Serializ
                 Math.pow(
                         Math.sin(latitudeDifference / 2)
                         , 2
-                ) + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(other.latitude)) * Math.pow(
-                        Math.sin(longitudeDifference / 2)
-                        , 2
+                ) + Math.cos(Math.toRadians(this.latitude))
+                        * Math.cos(Math.toRadians(other.latitude))
+                            * Math.pow(
+                                Math.sin(longitudeDifference / 2)
+                                , 2
                 )
         );
-        int EARTH_RADIUS = 6371;
-        return 2 * EARTH_RADIUS * Math.asin(SQRTSegment);
+        return 2 * 6371 * Math.asin(SQRTSegment);
     }
 
     @Override

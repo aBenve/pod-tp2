@@ -67,7 +67,6 @@ public class CSVReaderHelper {
 
     public Map<Integer, Station> getStationsData(){
         List<String[]> data =  getData(this.path + STATIONS);
-
         if (data.isEmpty())
             throw new RuntimeException("Empty stations csv");
 

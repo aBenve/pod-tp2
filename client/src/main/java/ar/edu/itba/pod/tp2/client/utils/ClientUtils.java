@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SortedSet;
 import java.util.function.Supplier;
 
 public class ClientUtils {
@@ -26,13 +27,13 @@ public class ClientUtils {
     }
 
 
-    public static void writeQuery1(String outPath, Map<String, Integer> data) {
+    public static void writeQuery1(String outPath, SortedSet<Map.Entry<String, Integer>> data) {
         StringBuilder answer = new StringBuilder();
 
         answer.append("station;trips\n");
-        data.forEach((key, value) -> {
-            answer.append(key).append(";")
-                    .append(value).append("\n");
+        data.forEach((entry) -> {
+            answer.append(entry.getKey()).append(";")
+                    .append(entry.getValue()).append("\n");
         });
 
         createFile(outPath, answer.toString());
@@ -44,17 +45,17 @@ public class ClientUtils {
         Parc du Pélican (1ère avenue / Masson);Marché Atwater;21/10/2021 16:27:24;21/10/2021 16:29:45;7.23;184.43
         St-Hubert / Duluth;de Mentana / Marie-Anne;09/08/2022 17:24:40;09/08/2022 17:24:47;7.22;184.43
      */
-    public static void writeQuery2(String outPath, Map<String, SecondQueryOutputData> data) {
+    public static void writeQuery2(String outPath, SortedSet<Map.Entry<String, SecondQueryOutputData>> data) {
         StringBuilder answer = new StringBuilder();
 
         answer.append("start_station;end_station;start_date;end_date;distance;speed\n");
-        data.forEach((key, value) -> {
-            answer.append(key).append(";")
-                    .append(value.destination()).append(";")
-                    .append(value.startDate()).append(";")
-                    .append(value.endDate()).append(";")
-                    .append(value.distance()).append(";")
-                    .append(value.velocity()).append("\n");
+        data.forEach((entry) -> {
+            answer.append(entry.getKey()).append(";")
+                    .append(entry.getValue().destination()).append(";")
+                    .append(entry.getValue().startDate()).append(";")
+                    .append(entry.getValue().endDate()).append(";")
+                    .append(entry.getValue().distance()).append(";")
+                    .append(entry.getValue().velocity()).append("\n");
         });
 
         createFile(outPath, answer.toString());

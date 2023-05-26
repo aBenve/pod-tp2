@@ -7,6 +7,7 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
@@ -34,12 +35,12 @@ public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, 
             return;
         }
 
+
         double distance = origin.getCoordinates().distanceTo(destination.getCoordinates());
 
         Duration time = Duration.between(value.getStartDateTime(), value.getEndDateTime());
 
-        double speed = distance / time.toSeconds();
-
+        double speed = distance / (time.toSeconds() / 3600.0);
 
         speed = Math.round(speed * 100.0) / 100.0;
         distance = Math.round(distance * 100.0) / 100.0;

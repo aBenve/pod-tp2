@@ -14,6 +14,7 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.config.GroupConfig;
+import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 
 
@@ -86,6 +88,7 @@ public class Client {
         IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("i61448-bike-map");
         IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
+
         bikeIMap.putAll(readerHelper.getBikesData());
         stationIMap.putAll(readerHelper.getStationsData());
 
@@ -94,7 +97,7 @@ public class Client {
 
         switch (selectedQuery) {
             case "query1" -> {
-                Optional<Map<String, Integer>> query1Result = query1(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
+                Optional<SortedSet<Map.Entry<String, Integer>>> query1Result = query1(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
 
                 if (query1Result.isPresent())
                     ClientUtils.writeQuery1(outPath, query1Result.get());
@@ -104,7 +107,7 @@ public class Client {
                 System.out.println(query1Result);
             }
             case "query2" -> {
-                Optional<Map<String, SecondQueryOutputData>> query2Result = query2(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
+                Optional<SortedSet<Map.Entry<String, SecondQueryOutputData>>> query2Result = query2(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
 
                 if (query2Result.isPresent())
                     ClientUtils.writeQuery2(outPath, query2Result.get());
@@ -127,21 +130,23 @@ public class Client {
         // Clean all maps
         bikeIMap.clear();
         stationIMap.clear();
+        hazelcastInstance.getDistributedObjects().forEach(DistributedObject::destroy);
+
 
         // Shutdown
         HazelcastClient.shutdownAll();
     }
 
-    private static Optional<Map<String, Integer>> query1 (HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ){
+    private static Optional<SortedSet<Map.Entry<String, Integer>>> query1 (HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ){
         JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query1");
         Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
 
-        JobCompletableFuture<Map<String, Integer>> future = job
+        JobCompletableFuture<SortedSet<Map.Entry<String, Integer>>> future = job
                 .mapper(new OnlyMemberBikesMapper())
                 .reducer(new CountReducerFactory())
                 .submit(new OrderStationsByTripsOrAlphabetic());
         try {
-            Map<String, Integer> resultMap = future.get();
+            SortedSet<Map.Entry<String, Integer>> resultMap = future.get();
             return Optional.of(resultMap);
         }
         catch (InterruptedException | ExecutionException e) {
@@ -150,17 +155,18 @@ public class Client {
         return Optional.empty();
     }
 
-    private static Optional<Map<String, SecondQueryOutputData>> query2( HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ) {
+    private static Optional<SortedSet<Map.Entry<String, SecondQueryOutputData>>> query2( HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ) {
         JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query2");
         Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
-        JobCompletableFuture<Map<String, SecondQueryOutputData>> future = job
+
+        JobCompletableFuture<SortedSet<Map.Entry<String, SecondQueryOutputData>>> future = job
                 .mapper(new StationsNamesWithDatesAndDistanceMapper())
                 .reducer(new TakeFastestTravelReducerFactory())
                 .submit(new OrderStationsByVelocityOrAlphabetic());
 
         try {
-            Map<String, SecondQueryOutputData> resultMap2 = future.get();
-            return Optional.of(resultMap2);
+            SortedSet<Map.Entry<String, SecondQueryOutputData>> resultMap = future.get();
+            return Optional.of(resultMap);
         }
         catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
