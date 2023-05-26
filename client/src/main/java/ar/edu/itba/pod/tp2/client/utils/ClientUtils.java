@@ -7,6 +7,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
@@ -27,7 +28,7 @@ public class ClientUtils {
     }
 
 
-    public static void writeQuery1(String outPath, SortedSet<Map.Entry<String, Integer>> data) {
+    public static void writeQuery1(String outPath, List<Map.Entry<String, Integer>> data) {
         StringBuilder answer = new StringBuilder();
 
         answer.append("station;trips\n");
@@ -45,7 +46,7 @@ public class ClientUtils {
         Parc du Pélican (1ère avenue / Masson);Marché Atwater;21/10/2021 16:27:24;21/10/2021 16:29:45;7.23;184.43
         St-Hubert / Duluth;de Mentana / Marie-Anne;09/08/2022 17:24:40;09/08/2022 17:24:47;7.22;184.43
      */
-    public static void writeQuery2(String outPath, SortedSet<Map.Entry<String, SecondQueryOutputData>> data) {
+    public static void writeQuery2(String outPath, List<Map.Entry<String, SecondQueryOutputData>> data) {
         StringBuilder answer = new StringBuilder();
 
         answer.append("start_station;end_station;start_date;end_date;distance;speed\n");

@@ -29,16 +29,12 @@ import java.io.File;
 import java.io.FileWriter;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 
 public class Client {
 
-    private static final String OUTPUT_FILE_NAME = "output.csv";
     private static Logger logger = LoggerFactory.getLogger(Client.class);
 
     public static void main(String[] args) throws InterruptedException, IOException, ExecutionException {
@@ -50,20 +46,28 @@ public class Client {
         }
 
         String selectedQuery = args[0];
+        Integer stationsAmount = 0;
+        if(selectedQuery.equals("query2")) {
+            stationsAmount = Integer.parseInt(ClientUtils.getProperty(InputProperty.AMOUNT_OF_STATIONS, () -> "Missing n").orElse(""));
+        }
 
         // ./queryX -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX-DoutPath=YY [params]
         final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Missing addresses").orElse("");
         final String nodesAddresses[] = RAWAddresses.split(";");
 
+        if(nodesAddresses.length == 0){
+            logger.error("Missing addresses");
+            System.exit(1);
+        }
+
         final String inPath = ClientUtils.getProperty(InputProperty.IN_PATH, () -> "Missing inPath").orElse("");
         final String outPath = ClientUtils.getProperty(InputProperty.OUT_PATH, () -> "Missing outPath").orElse("");
 
 
+
         logger.info("Client Starting ...");
 
-        // Client Config
         ClientConfig clientConfig = new ClientConfig();
-        // Group Config
         GroupConfig groupConfig = new GroupConfig()
                 .setName("i61448")
                 .setPassword("benve");
@@ -75,11 +79,9 @@ public class Client {
         clientNetworkConfig.addAddress(addresses);
         clientConfig.setNetworkConfig(clientNetworkConfig);
 
-        // Here we create a Hazelcast client and connect to a cluster that has a node
         HazelcastInstance hazelcastInstance = HazelcastClient.newHazelcastClient(clientConfig);
 
         // ----------------------------------------
-        // Here we do some operations on the cluster
 
         logger.info("Inicio de la lectura del archivo");
 
@@ -97,24 +99,22 @@ public class Client {
 
         switch (selectedQuery) {
             case "query1" -> {
-                Optional<SortedSet<Map.Entry<String, Integer>>> query1Result = query1(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
+                Optional<List<Map.Entry<String, Integer>>> query1Result = query1(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
 
                 if (query1Result.isPresent())
                     ClientUtils.writeQuery1(outPath, query1Result.get());
                 else
                     logger.error("Error en la ejecucion de la query1");
 
-                System.out.println(query1Result);
             }
             case "query2" -> {
-                Optional<SortedSet<Map.Entry<String, SecondQueryOutputData>>> query2Result = query2(hazelcastInstance, KeyValueSource.fromMap(bikeIMap));
+                Optional<List<Map.Entry<String, SecondQueryOutputData>>> query2Result = query2(hazelcastInstance, KeyValueSource.fromMap(bikeIMap), stationsAmount);
 
                 if (query2Result.isPresent())
                     ClientUtils.writeQuery2(outPath, query2Result.get());
                 else
                     logger.error("Error en la ejecucion de la query2");
 
-                System.out.println(query2Result);
             }
             default -> {
                 logger.error("Invalid query");
@@ -137,16 +137,16 @@ public class Client {
         HazelcastClient.shutdownAll();
     }
 
-    private static Optional<SortedSet<Map.Entry<String, Integer>>> query1 (HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ){
+    private static Optional<List<Map.Entry<String, Integer>>> query1 (HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ){
         JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query1");
         Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
 
-        JobCompletableFuture<SortedSet<Map.Entry<String, Integer>>> future = job
+        JobCompletableFuture<List<Map.Entry<String, Integer>>> future = job
                 .mapper(new OnlyMemberBikesMapper())
                 .reducer(new CountReducerFactory())
                 .submit(new OrderStationsByTripsOrAlphabetic());
         try {
-            SortedSet<Map.Entry<String, Integer>> resultMap = future.get();
+            List<Map.Entry<String, Integer>> resultMap = future.get();
             return Optional.of(resultMap);
         }
         catch (InterruptedException | ExecutionException e) {
@@ -155,17 +155,17 @@ public class Client {
         return Optional.empty();
     }
 
-    private static Optional<SortedSet<Map.Entry<String, SecondQueryOutputData>>> query2( HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource ) {
+    private static Optional<List<Map.Entry<String, SecondQueryOutputData>>> query2( HazelcastInstance hazelcastInstance, KeyValueSource<Integer, Bike> bikeKeyValueSource, Integer n ) {
         JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query2");
         Job<Integer, Bike> job = jobTracker.newJob(bikeKeyValueSource);
 
-        JobCompletableFuture<SortedSet<Map.Entry<String, SecondQueryOutputData>>> future = job
+        JobCompletableFuture<List<Map.Entry<String, SecondQueryOutputData>>> future = job
                 .mapper(new StationsNamesWithDatesAndDistanceMapper())
                 .reducer(new TakeFastestTravelReducerFactory())
-                .submit(new OrderStationsByVelocityOrAlphabetic());
+                .submit(new OrderStationsByVelocityOrAlphabetic(n));
 
         try {
-            SortedSet<Map.Entry<String, SecondQueryOutputData>> resultMap = future.get();
+            List<Map.Entry<String, SecondQueryOutputData>> resultMap = future.get();
             return Optional.of(resultMap);
         }
         catch (InterruptedException | ExecutionException e) {
@@ -173,13 +173,5 @@ public class Client {
         }
         return Optional.empty();
     }
-
-    // TODO: REWRITE THIS
-
-    /*
-    station;started_trips
-    Métro Mont-Royal (Rivard / du Mont-Royal);89836
-    Marquette / du Mont-Royal;61421
-     */
 
 }

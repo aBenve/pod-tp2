@@ -4,6 +4,8 @@ public enum InputProperty {
     ADDRESSES("addresses"),
     IN_PATH("inPath"),
     OUT_PATH("outPath"),
+
+    AMOUNT_OF_STATIONS("n"),
     ;
 
     private String label;
