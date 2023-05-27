@@ -12,12 +12,12 @@ import java.io.Serializable;
 
 public class OnlyMemberBikesMapper implements Mapper<Integer, Bike, String, Integer>, HazelcastInstanceAware, Serializable {
 
-    private IMap<Integer, Station> stationIMap;
+    private transient HazelcastInstance hazelcastInstance;
 
     @Override
     public void map(Integer number, Bike bike, Context<String, Integer> context) {
 
-        Station origin = stationIMap.get(bike.getOrigin());
+        Station origin = (Station) hazelcastInstance.getMap("i61448-station-map").get(bike.getOrigin());
         if (origin == null) {
             throw new RuntimeException("Origin station not found");
         }
@@ -27,6 +27,6 @@ public class OnlyMemberBikesMapper implements Mapper<Integer, Bike, String, Inte
     }
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        this.stationIMap = hazelcastInstance.getMap("i61448-station-map");
+        this.hazelcastInstance = hazelcastInstance;
     }
 }

@@ -15,10 +15,13 @@ import java.time.temporal.ChronoUnit;
 public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, Bike, String, SecondQueryOutputData>, HazelcastInstanceAware, Serializable {
 
 
-    private IMap<Integer, Station> stationIMap;
+    private transient HazelcastInstance hazelcastInstance;
+
 
     @Override
     public void map(Integer key, Bike value, Context<String, SecondQueryOutputData> context) {
+
+        IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
         Station origin = stationIMap.get(value.getOrigin());
         if (origin == null) {
@@ -60,6 +63,6 @@ public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, 
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        this.stationIMap = hazelcastInstance.getMap("i61448-station-map");
+        this.hazelcastInstance = hazelcastInstance;
     }
 }

@@ -8,7 +8,7 @@ public enum InputProperty {
     AMOUNT_OF_STATIONS("n"),
     ;
 
-    private String label;
+    private final String label;
     InputProperty(String label) {
         this.label = label;
     }
