@@ -6,4 +6,4 @@ PATH_TO_CODE_BASE=`pwd`
 
 MAIN_CLASS="ar.edu.itba.pod.tp2.client.Client"
 
-java $JAVA_OPTS -cp 'lib/jars/*'  $MAIN_CLASS "query2" $*
+java "$@" $JAVA_OPTS -cp 'lib/jars/*'  $MAIN_CLASS "query2" $*
