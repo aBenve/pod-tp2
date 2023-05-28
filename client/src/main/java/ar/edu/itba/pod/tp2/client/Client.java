@@ -1,12 +1,6 @@
 package ar.edu.itba.pod.tp2.client;
 
-import ar.edu.itba.pod.tp2.Collators.OrderStationsByTripsOrAlphabetic;
-import ar.edu.itba.pod.tp2.Collators.OrderStationsByVelocityOrAlphabetic;
-import ar.edu.itba.pod.tp2.Mappers.OnlyMemberBikesMapper;
-import ar.edu.itba.pod.tp2.Mappers.StationsNamesWithDatesAndDistanceMapper;
 import ar.edu.itba.pod.tp2.Models.*;
-import ar.edu.itba.pod.tp2.Reducers.CountReducerFactory;
-import ar.edu.itba.pod.tp2.Reducers.TakeFastestTravelReducerFactory;
 import ar.edu.itba.pod.tp2.client.utils.*;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
@@ -15,16 +9,11 @@ import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import com.hazelcast.mapreduce.Job;
-import com.hazelcast.mapreduce.JobCompletableFuture;
-import com.hazelcast.mapreduce.JobTracker;
-import com.hazelcast.mapreduce.KeyValueSource;
+
+import com.hazelcast.core.MapLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 
 import java.io.IOException;
 import java.util.*;
@@ -52,7 +41,8 @@ public class Client {
 
         // ./queryX -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX-DoutPath=YY [params]
         final String RAWAddresses = ClientUtils.getProperty(InputProperty.ADDRESSES, () -> "Faltan las direcciones de los nodos").orElse("");
-        final String nodesAddresses[] = RAWAddresses.split(";");
+
+        final String nodesAddresses[] = RAWAddresses.replaceAll("\\'","" ).split(";");
 
         if(nodesAddresses.length == 0){
             logger.error("Faltan las direcciones de los nodos");
@@ -73,9 +63,7 @@ public class Client {
         // Client Network Config
         ClientNetworkConfig clientNetworkConfig = new ClientNetworkConfig();
 
-        String[] addresses = {"192.168.1.98:5701"};
-
-        clientNetworkConfig.addAddress(addresses);
+        clientNetworkConfig.addAddress(nodesAddresses);
         clientConfig.setNetworkConfig(clientNetworkConfig);
 
         HazelcastInstance hazelcastInstance = HazelcastClient.newHazelcastClient(clientConfig);
@@ -99,6 +87,7 @@ public class Client {
 
         logger.info("Fin de la lectura del archivo");
         logger.info("Inicio del trabajo map/reduce");
+        long startTime = System.currentTimeMillis();
 
         switch (selectedQuery) {
             case "query1" -> {
@@ -133,7 +122,10 @@ public class Client {
             }
         }
 
+        long endTime = System.currentTimeMillis();
         logger.info("Fin del trabajo map/reduce");
+        logger.info("Tiempo de ejecucion: " + (endTime - startTime) + "ms");
+
 
         // ----------------------------------------
 
@@ -142,6 +134,8 @@ public class Client {
     private static void clearAndExit(IMap<Integer, Bike> bikeIMap, IMap<Integer, Station> stationIMap, HazelcastInstance hazelcastInstance, boolean error) {
         bikeIMap.clear();
         stationIMap.clear();
+        bikeIMap.destroy();
+        stationIMap.destroy();
         hazelcastInstance.getDistributedObjects().forEach(DistributedObject::destroy);
         HazelcastClient.shutdownAll();
         System.exit(error ? 1 : 0);
