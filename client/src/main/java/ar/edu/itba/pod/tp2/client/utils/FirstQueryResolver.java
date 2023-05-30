@@ -1,6 +1,7 @@
 package ar.edu.itba.pod.tp2.client.utils;
 
 import ar.edu.itba.pod.tp2.Collators.OrderStationsByTripsOrAlphabetic;
+import ar.edu.itba.pod.tp2.Combiner.SimpleFirstQueryCombinerFactory;
 import ar.edu.itba.pod.tp2.Mappers.OnlyMemberBikesMapper;
 import ar.edu.itba.pod.tp2.Models.Bike;
 import ar.edu.itba.pod.tp2.Reducers.CountReducerFactory;
@@ -38,6 +39,7 @@ public class FirstQueryResolver implements QueryResolver<Map.Entry<String, Integ
 
         JobCompletableFuture<List<Map.Entry<String, Integer>>> future = job
                 .mapper(new OnlyMemberBikesMapper())
+                .combiner(new SimpleFirstQueryCombinerFactory())
                 .reducer(new CountReducerFactory())
                 .submit(new OrderStationsByTripsOrAlphabetic());
         try {
