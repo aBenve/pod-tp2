@@ -1,9 +1,11 @@
 package ar.edu.itba.pod.tp2.client.utils;
 
 import ar.edu.itba.pod.tp2.Collators.OrderStationsByVelocityOrAlphabetic;
+import ar.edu.itba.pod.tp2.Keypredicates.DiscardSameStationsPredicate;
 import ar.edu.itba.pod.tp2.Mappers.StationsNamesWithDatesAndDistanceMapper;
 import ar.edu.itba.pod.tp2.Models.Bike;
 import ar.edu.itba.pod.tp2.Models.SecondQueryOutputData;
+import ar.edu.itba.pod.tp2.Models.TravelIdStationsAndMember;
 import ar.edu.itba.pod.tp2.Reducers.TakeFastestTravelReducerFactory;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
@@ -21,10 +23,10 @@ public class SecondQueryResolver implements QueryResolver<Map.Entry<String, Seco
 
     private final HazelcastInstance hazelcastInstance;
     private final String jobName;
-    private final IMap<Integer,Bike> fromMap;
+    private final IMap<TravelIdStationsAndMember,Bike> fromMap;
 
     private final Integer N;
-    public SecondQueryResolver(String jobName, HazelcastInstance hazelcastInstance, IMap<Integer, Bike> fromMap, Integer N){
+    public SecondQueryResolver(String jobName, HazelcastInstance hazelcastInstance, IMap<TravelIdStationsAndMember, Bike> fromMap, Integer N){
         this.jobName = jobName;
         this.hazelcastInstance = hazelcastInstance;
         this.fromMap = fromMap;
@@ -34,9 +36,10 @@ public class SecondQueryResolver implements QueryResolver<Map.Entry<String, Seco
     @Override
     public Optional<List<Map.Entry<String, SecondQueryOutputData>>> resolve() {
         JobTracker jobTracker = hazelcastInstance.getJobTracker("i61448-query2");
-        Job<Integer, Bike> job = jobTracker.newJob(KeyValueSource.fromMap(fromMap));
+        Job<TravelIdStationsAndMember, Bike> job = jobTracker.newJob(KeyValueSource.fromMap(fromMap));
 
         JobCompletableFuture<List<Map.Entry<String, SecondQueryOutputData>>> future = job
+                .keyPredicate(new DiscardSameStationsPredicate())
                 .mapper(new StationsNamesWithDatesAndDistanceMapper())
                 .reducer(new TakeFastestTravelReducerFactory())
                 .submit(new OrderStationsByVelocityOrAlphabetic(this.N));

@@ -1,9 +1,9 @@
 package ar.edu.itba.pod.tp2.client.utils;
 
 import ar.edu.itba.pod.tp2.Models.Bike;
+import ar.edu.itba.pod.tp2.Models.TravelIdStationsAndMember;
 import ar.edu.itba.pod.tp2.Models.Coordinates;
 import ar.edu.itba.pod.tp2.Models.Station;
-import com.google.type.DateTime;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class CSVReaderHelper {
 
-    private static final String BIKES = "bikes1000.csv";
+    private static final String BIKES = "bikes.csv";
     private static final String STATIONS = "stations.csv";
 
     private static final Integer BIKES_LENGTH = 5;
@@ -35,23 +35,26 @@ public class CSVReaderHelper {
         this.delimiter = delimiter;
     }
 
-
-    public Map<Integer, Bike> getBikesData() throws Exception {
+    public Map<TravelIdStationsAndMember, Bike> getBikesData() throws Exception {
         List<String[]> data =  getData(this.path + BIKES);
 
         if (data.isEmpty()) {
             throw new Exception("Empty bikes csv");
         }
 
-        Map<Integer, Bike> bikes = new HashMap<>();
+        Map<TravelIdStationsAndMember, Bike> bikes = new HashMap<>();
 
         final Integer[] index = {0};
         data.forEach((row) -> {
             if(row.length != BIKES_LENGTH)
                 throw new RuntimeException("Invalid csv length");
-
             bikes.put(
-                    index[0],
+                    new TravelIdStationsAndMember(
+                            index[0],
+                            Integer.parseInt(row[1]),
+                            Integer.parseInt(row[3]),
+                            row[4].equals("1")
+                    ),
                     new Bike(
                         LocalDateTime.parse(row[0],formatter),
                         LocalDateTime.parse(row[2],formatter),
@@ -60,6 +63,7 @@ public class CSVReaderHelper {
                         row[4].equals("1")
                     )
             );
+
             index[0]++;
         });
 

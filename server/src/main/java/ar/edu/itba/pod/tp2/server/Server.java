@@ -12,7 +12,15 @@ import java.util.Collections;
 public class Server {
     private static Logger logger = LoggerFactory.getLogger(Server.class);
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) {
+
+        if(args.length == 0){
+            logger.error("Falta la interfaz de red");
+            System.exit(1);
+        }
+
+        String selectedInterface = args[0];
+
         logger.info(" Server Starting ...");
 
         Config config = new Config();
@@ -27,7 +35,7 @@ public class Server {
                 .setMulticastConfig(multicastConfig);
 
         InterfacesConfig interfacesConfig = new InterfacesConfig()
-                .setInterfaces(Collections.singletonList("192.168.1.*"))
+                .setInterfaces(Collections.singletonList(selectedInterface))
                 .setEnabled(true);
 
         NetworkConfig networkConfig = new NetworkConfig()

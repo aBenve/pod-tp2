@@ -2,8 +2,10 @@ package ar.edu.itba.pod.tp2.client.utils;
 
 import ar.edu.itba.pod.tp2.Collators.OrderStationsByTripsOrAlphabetic;
 import ar.edu.itba.pod.tp2.Combiner.SimpleFirstQueryCombinerFactory;
+import ar.edu.itba.pod.tp2.Keypredicates.OnlyMembersPredicate;
 import ar.edu.itba.pod.tp2.Mappers.OnlyMemberBikesMapper;
 import ar.edu.itba.pod.tp2.Models.Bike;
+import ar.edu.itba.pod.tp2.Models.TravelIdStationsAndMember;
 import ar.edu.itba.pod.tp2.Reducers.CountReducerFactory;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
@@ -22,10 +24,10 @@ public class FirstQueryResolver implements QueryResolver<Map.Entry<String, Integ
 
     private final HazelcastInstance hazelcastInstance;
     private final String jobName;
-    private final IMap<Integer,Bike> fromMap;
+    private final IMap<TravelIdStationsAndMember,Bike> fromMap;
 
 
-    public FirstQueryResolver(String jobName, HazelcastInstance hazelcastInstance, IMap<Integer,Bike> fromMap){
+    public FirstQueryResolver(String jobName, HazelcastInstance hazelcastInstance, IMap<TravelIdStationsAndMember,Bike> fromMap){
         this.jobName = jobName;
         this.hazelcastInstance = hazelcastInstance;
         this.fromMap = fromMap;
@@ -35,9 +37,10 @@ public class FirstQueryResolver implements QueryResolver<Map.Entry<String, Integ
     @Override
     public Optional<List<Map.Entry<String, Integer>>> resolve() {
         JobTracker jobTracker = hazelcastInstance.getJobTracker(jobName);
-        Job<Integer, Bike> job = jobTracker.newJob(KeyValueSource.fromMap(fromMap));
+        Job<TravelIdStationsAndMember, Bike> job = jobTracker.newJob(KeyValueSource.fromMap(fromMap));
 
         JobCompletableFuture<List<Map.Entry<String, Integer>>> future = job
+                .keyPredicate(new OnlyMembersPredicate())
                 .mapper(new OnlyMemberBikesMapper())
                 .combiner(new SimpleFirstQueryCombinerFactory())
                 .reducer(new CountReducerFactory())

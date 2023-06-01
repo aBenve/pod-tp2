@@ -8,18 +8,16 @@ import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
-public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, Bike, String, SecondQueryOutputData>, HazelcastInstanceAware, Serializable {
+public class StationsNamesWithDatesAndDistanceMapper implements Mapper<TravelIdStationsAndMember, Bike, String, SecondQueryOutputData>, HazelcastInstanceAware, Serializable {
 
 
     private transient HazelcastInstance hazelcastInstance;
 
 
     @Override
-    public void map(Integer key, Bike value, Context<String, SecondQueryOutputData> context) {
+    public void map(TravelIdStationsAndMember travelIdStationsAndMember, Bike value, Context<String, SecondQueryOutputData> context) {
 
         IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
@@ -34,10 +32,12 @@ public class StationsNamesWithDatesAndDistanceMapper implements Mapper<Integer, 
             throw new RuntimeException("Destination station not found");
         }
 
-        // If the origin and destination are the same, we don't want to emit anything
-        if(origin.equals(destination)){
-            return;
-        }
+        // Esta condicion se paso al predicate
+        /*
+            if(origin.equals(destination)){
+                return;
+            }
+        */
 
 
         double distance = origin.getCoordinates().distanceTo(destination.getCoordinates());

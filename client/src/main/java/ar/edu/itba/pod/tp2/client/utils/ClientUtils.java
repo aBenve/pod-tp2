@@ -37,7 +37,8 @@ public class ClientUtils {
                     .append(entry.getValue()).append("\n");
         });
 
-        createFile(outPath, answer.toString());
+
+        createFile(outPath, answer.toString(), "query1.csv");
     }
 
 
@@ -61,11 +62,11 @@ public class ClientUtils {
 
 
 
-        createFile(outPath, answer.toString());
+        createFile(outPath, answer.toString(), "query2.csv");
     }
 
-    private static void createFile(String outPath, String answer) {
-        File outFile = new File(outPath + "out.csv");
+    private static void createFile(String outPath, String answer, String fileName) {
+        File outFile = new File(outPath + fileName);
         try {
             if (!outFile.exists()) {
                 outFile.createNewFile();

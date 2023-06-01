@@ -16,7 +16,7 @@ find . -path './tmp/tpe2-*/*' -exec chmod u+x {} \;
 ## Correr el servidor
 
 ```bash
-cd ./tmp/tpe2-l61448-server-2023.1Q/ && ./run-server.sh
+cd ./tmp/tpe2-l61448-server-2023.1Q/ && ./run-server.sh [interfaz]
 ```
 
 ## Correr queries
@@ -25,12 +25,4 @@ cd ./tmp/tpe2-l61448-server-2023.1Q/ && ./run-server.sh
 cd ./tmp/tpe2-l61448-client-2023.1Q/ && ./queryX.sh -Daddresses='xx.xx.xx.xx:XXXX;yy.yy.yy.yy:YYYY' -DinPath=XX -DoutPath=YY [params]
 ```
 
-o
-
-```bash
-cd ./script && node run.js [query] [params]
-```
-
-Donde 
-1. [query] es el nombre de la query
-2. [params] son [cantidad-nodos] [cantidad-de-veces] [inPath] [outPath] [N](si es query2)
+El resultado de se guardara en un archivo queryX.csv y los tiempos de dicha ejecucion se apendearan en el archivo times.txt

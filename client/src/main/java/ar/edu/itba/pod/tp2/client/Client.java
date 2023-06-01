@@ -9,23 +9,17 @@ import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-
-import com.hazelcast.core.MapLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 
 public class Client {
 
     private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
-    public static void main(String[] args) throws InterruptedException, IOException, ExecutionException {
-
+    public static void main(String[] args)  {
 
         if(args.length == 0){
             logger.error("Falta la query");
@@ -52,8 +46,6 @@ public class Client {
         final String inPath = ClientUtils.getProperty(InputProperty.IN_PATH, () -> "Falta la direccion de entrada de datos").orElse("");
         final String outPath = ClientUtils.getProperty(InputProperty.OUT_PATH, () -> "Falta la direccion de salida de datos").orElse("");
 
-        logger.info("Iniciando cliente ...");
-
         ClientConfig clientConfig = new ClientConfig();
         GroupConfig groupConfig = new GroupConfig()
                 .setName("i61448")
@@ -74,7 +66,7 @@ public class Client {
 
         CSVReaderHelper readerHelper = new CSVReaderHelper(inPath, ';');
 
-        IMap<Integer, Bike> bikeIMap = hazelcastInstance.getMap("i61448-bike-map");
+        IMap<TravelIdStationsAndMember, Bike> bikeIMap = hazelcastInstance.getMap("i61448-bike-map");
         IMap<Integer, Station> stationIMap = hazelcastInstance.getMap("i61448-station-map");
 
         try{
@@ -87,7 +79,6 @@ public class Client {
 
         logger.info("Fin de la lectura del archivo");
         logger.info("Inicio del trabajo map/reduce");
-        long startTime = System.currentTimeMillis();
 
         switch (selectedQuery) {
             case "query1" -> {
@@ -121,17 +112,14 @@ public class Client {
                 System.exit(1);
             }
         }
-
-        long endTime = System.currentTimeMillis();
         logger.info("Fin del trabajo map/reduce");
-        logger.info("Tiempo de ejecucion: " + (endTime - startTime) + "ms");
 
 
         // ----------------------------------------
 
         clearAndExit(bikeIMap, stationIMap, hazelcastInstance,false);
     }
-    private static void clearAndExit(IMap<Integer, Bike> bikeIMap, IMap<Integer, Station> stationIMap, HazelcastInstance hazelcastInstance, boolean error) {
+    private static void clearAndExit(IMap<TravelIdStationsAndMember, Bike> bikeIMap, IMap<Integer, Station> stationIMap, HazelcastInstance hazelcastInstance, boolean error) {
         bikeIMap.clear();
         stationIMap.clear();
         bikeIMap.destroy();
@@ -141,4 +129,5 @@ public class Client {
         System.exit(error ? 1 : 0);
     }
 }
+
 
